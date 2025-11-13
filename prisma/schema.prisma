@@ -1,0 +1,139 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Hero {
+  id           String   @id @default(uuid())
+  name         String
+  class        String?
+  level        Int      @default(1)
+  hpMax        Int      @default(10)
+  hpCurrent    Int      @default(10)
+  strength     Int      @default(10)
+  dexterity    Int      @default(10)
+  constitution Int      @default(10)
+  intelligence Int      @default(10)
+  wisdom       Int      @default(10)
+  charisma     Int      @default(10)
+  ac           Int      @default(10)
+  initiative   Int      @default(10)
+  lore         String?
+  overallDmg   Int      @default(0)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  stories      Story[]
+  encounters   EncounterPlayer[]
+}
+
+model Monster {
+  id          String   @id @default(uuid())
+  name        String
+  index       String?
+  hp          Int      @default(10)
+  maxHp       Int      @default(10)
+  ac          Int      @default(10)
+  initiative  Int      @default(0)
+  description String?
+  fullData    Json?
+  synced      Boolean  @default(false)  
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  encounters  EncounterMonster[]
+}
+
+
+model Encounter {
+  id         String    @id @default(uuid())
+  title      String?
+  summary    String?
+  type       String?   // 'encounter_start', 'player_attack', 'monster_attack', 'heal', 'death', etc.
+  players    EncounterPlayer[]
+  monsters   EncounterMonster[]
+  metadata   Json?
+  occurredAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+}
+
+model DailyLog {
+  id        String   @id @default(uuid())
+  content   String
+  type      String?   // 'note', 'session', 'story', 'dm_note'
+  createdAt DateTime @default(now())
+}
+
+model EncounterPlayer {
+  id         String   @id @default(uuid())
+  encounter  Encounter @relation(fields: [encounterId], references: [id])
+  encounterId String
+  hero       Hero     @relation(fields: [heroId], references: [id])
+  heroId     String
+  hp         Int
+  maxHp      Int
+  ac         Int
+  initiative Int
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@unique([encounterId, heroId])
+}
+
+model EncounterMonster {
+  id         String   @id @default(uuid())
+  encounter  Encounter @relation(fields: [encounterId], references: [id])
+  encounterId String
+  monster    Monster  @relation(fields: [monsterId], references: [id])
+  monsterId  String
+  hp         Int
+  maxHp      Int
+  ac         Int
+  initiative Int
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@unique([encounterId, monsterId])
+}
+
+model Story {
+  id            String      @id @default(uuid())
+  hero          Hero?       @relation(fields: [heroId], references: [id])
+  heroId        String?
+  title         String
+  style         String?
+  text          String
+  statsSnapshot Json?
+  createdAt     DateTime @default(now())
+
+  bookEntries   BookEntry[]
+}
+
+model Book {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  entries     BookEntry[]
+}
+
+model BookEntry {
+  id        String   @id @default(uuid())
+  book      Book     @relation(fields: [bookId], references: [id])
+  bookId    String
+  story     Story    @relation(fields: [storyId], references: [id])
+  storyId   String
+  ord       Int      @default(0)
+}
+
+model Battle {
+  id         String    @id @default(uuid())
+  occurredAt DateTime  @default(now())
+  summary    String?
+  metadata   Json?
+}
